@@ -113,5 +113,10 @@ mod tests {
     fn test_metal_high_conductivity() {
         let metal = MaterialKind::Metal;
         assert!(metal.attenuation_neper_per_m() > 1000.0);
+        let r_metal = metal.normal_power_reflection_coeff();
+        assert!(
+            (r_metal - 1.0).abs() < 1e-3,
+            "Metal normal reflection coefficient must be ~1.0, got {r_metal}"
+        );
     }
 }
