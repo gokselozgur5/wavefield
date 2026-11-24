@@ -62,3 +62,24 @@ fn test_fdtd_metal_reflection_barrier() {
         "Metal barrier should shield RF field: behind={ez_behind}, before={ez_before}"
     );
 }
+
+#[test]
+fn test_fdtd_metal_pec_zeroing() {
+    let mut grid = FdtdGrid::new(20, 20, 0.01);
+    grid.set_material_region(8, 8, 12, 12, MaterialKind::Metal);
+    let src = SourceWaveform::ContinuousWave {
+        freq_hz: 2.4e9,
+        amplitude: 5.0,
+        phase_rad: 0.0,
+    };
+    for _ in 0..30 {
+        grid.inject_source(5, 10, &src);
+        grid.step();
+    }
+    for y in 8..12 {
+        for x in 8..12 {
+            let val = grid.ez[y * grid.width + x];
+            assert_eq!(val, 0.0, "Metal cell ({x}, {y}) must remain strictly 0.0 (PEC)");
+        }
+    }
+}
