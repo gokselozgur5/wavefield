@@ -29,3 +29,30 @@ fn update_h(@builtin(global_invocation_id) id: vec3<u32>) {
   }
 }
 `;
+
+export const WGSL_E_UPDATE = /* wgsl */ `
+@compute @workgroup_size(8, 8)
+fn update_e(@builtin(global_invocation_id) id: vec3<u32>) {
+  let x = id.x;
+  let y = id.y;
+  let w = params.width;
+  let h = params.height;
+  if (x == 0u || x >= (w - 1u) || y == 0u || y >= (h - 1u)) {
+    return;
+  }
+  let idx = y * w + x;
+  let hyW = w - 1u;
+  let curlH = (hy[y * hyW + x] - hy[y * hyW + (x - 1u)]) - (hx[y * w + x] - hx[(y - 1u) * w + x]);
+  let mat = materials[idx];
+  var ca = 1.0;
+  var cb = params.cDtDx;
+  if (mat == 5u) {
+    ca = 0.0;
+    cb = 0.0;
+  } else if (mat == 4u) {
+    ca = 0.98;
+    cb = params.cDtDx * 0.18;
+  }
+  ez[idx] = ca * ez[idx] + cb * curlH;
+}
+`;
