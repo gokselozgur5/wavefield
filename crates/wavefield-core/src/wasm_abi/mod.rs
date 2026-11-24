@@ -134,5 +134,31 @@ pub unsafe extern "C" fn wavefield_render_rgba(
     }
 }
 
+/// Allocate a block of bytes for WebAssembly memory sharing.
+#[no_mangle]
+pub extern "C" fn wavefield_alloc_bytes(len: usize) -> *mut u8 {
+    if len == 0 || len > (isize::MAX as usize) {
+        return std::ptr::null_mut();
+    }
+    let layout = match std::alloc::Layout::from_size_align(len, 1) {
+        Ok(l) => l,
+        Err(_) => return std::ptr::null_mut(),
+    };
+    unsafe { std::alloc::alloc(layout) }
+}
+
+/// Free a previously allocated block of bytes.
+///
+/// # Safety
+/// `ptr` must have been allocated by `wavefield_alloc_bytes` with the same `len`.
+#[no_mangle]
+pub unsafe extern "C" fn wavefield_free_bytes(ptr: *mut u8, len: usize) {
+    if !ptr.is_null() && len > 0 {
+        if let Ok(layout) = std::alloc::Layout::from_size_align(len, 1) {
+            std::alloc::dealloc(ptr, layout);
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests;
