@@ -106,3 +106,37 @@ export function handlePointerAction(e, canvas) {
     elProbe.textContent = `${probe.dbm.toFixed(1)} dBm (|Ez| ${probe.ezAbs.toFixed(2)} V/m)`;
   }
 }
+
+export function setupEventListeners(canvas) {
+  if (typeof document === 'undefined') return;
+  const on = (id, evt, fn) => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener(evt, fn);
+  };
+  on('select-preset', 'change', (e) => loadPreset(e.target.value));
+  on('select-brush', 'change', (e) => { state.brush = e.target.value; });
+  on('slider-freq', 'input', (e) => { state.freqGhz = parseFloat(e.target.value); syncUiFromState(); });
+  on('slider-elements', 'input', (e) => { state.elements = parseInt(e.target.value, 10); syncUiFromState(); });
+  on('slider-steer', 'input', (e) => { state.steerDeg = parseInt(e.target.value, 10); syncUiFromState(); });
+  on('select-view', 'change', (e) => { state.viewMode = e.target.value; });
+  on('btn-pause', 'click', (e) => {
+    state.paused = !state.paused;
+    e.target.textContent = state.paused ? 'Resume' : 'Pause';
+  });
+  on('btn-reset', 'click', () => state.solver.reset());
+  on('btn-clear-walls', 'click', () => { state.solver.materials.fill(0); state.solver.reset(); });
+
+  canvas.addEventListener('mousedown', (e) => { state.isDrawing = true; handlePointerAction(e, canvas); });
+  canvas.addEventListener('mousemove', (e) => {
+    if (state.isDrawing) handlePointerAction(e, canvas);
+    else {
+      const rect = canvas.getBoundingClientRect();
+      const gx = Math.floor((e.clientX - rect.left) * (canvas.width / rect.width));
+      const gy = Math.floor((e.clientY - rect.top) * (canvas.height / rect.height));
+      const p = state.solver.probeDbm(gx, gy);
+      const elP = document.getElementById('telemetry-probe');
+      if (elP) elP.textContent = `${p.dbm.toFixed(1)} dBm (|Ez| ${p.ezAbs.toFixed(2)} V/m)`;
+    }
+  });
+  window.addEventListener('mouseup', () => { state.isDrawing = false; });
+}
