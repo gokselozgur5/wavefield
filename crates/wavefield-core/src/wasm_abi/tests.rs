@@ -11,7 +11,7 @@ fn test_wasm_abi_lifecycle() {
         assert!(!ez_buf.is_null());
 
         let mut out = vec![0u8; 10 * 10 * 4];
-        wavefield_render_rgba(ptr, out.as_mut_ptr(), -60.0, 0.0);
+        wavefield_render_rgba(ptr, out.as_mut_ptr(), out.len(), -60.0, 0.0);
         assert_eq!(out[3], 255);
 
         wavefield_grid_destroy(ptr);
