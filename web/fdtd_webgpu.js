@@ -56,3 +56,26 @@ fn update_e(@builtin(global_invocation_id) id: vec3<u32>) {
   ez[idx] = ca * ez[idx] + cb * curlH;
 }
 `;
+
+export async function initWebGpuFdtd(width, height) {
+  if (typeof navigator === 'undefined' || !navigator.gpu) {
+    return null;
+  }
+  try {
+    const adapter = await navigator.gpu.requestAdapter();
+    if (!adapter) return null;
+    const device = await adapter.requestDevice();
+    const shaderModule = device.createShaderModule({
+      code: WGSL_FDTD_SOURCE + '\n' + WGSL_E_UPDATE,
+    });
+    return {
+      device,
+      shaderModule,
+      width,
+      height,
+      type: 'WebGPU WGSL',
+    };
+  } catch (_err) {
+    return null;
+  }
+}
