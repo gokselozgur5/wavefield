@@ -1,10 +1,14 @@
 //! 2D TMz Maxwell Finite-Difference Time-Domain (FDTD) wave equation solver.
 
+pub mod solver;
 pub mod sources;
+
+#[cfg(test)]
+mod tests;
 
 pub use sources::SourceWaveform;
 
-use crate::materials::{MaterialKind, EPSILON_0, MU_0, SPEED_OF_LIGHT};
+use crate::materials::{MaterialKind, EPSILON_0, SPEED_OF_LIGHT};
 
 /// 2D TMz Maxwell FDTD grid.
 pub struct FdtdGrid {
