@@ -9,12 +9,16 @@ export class FdtdCpuSolver {
     this.width = width;
     this.height = height;
     this.dx = dx;
-    this.dt = dx / (Math.SQRT2 * SPEED_OF_LIGHT);
+    this.dt = (0.98 * dx) / (Math.SQRT2 * SPEED_OF_LIGHT);
     this.stepCount = 0;
     this.ez = new Float32Array(width * height);
     this.hx = new Float32Array(width * height);
     this.hy = new Float32Array(width * height);
     this.materials = new Uint8Array(width * height);
+    this.ezPrevLeft = new Float32Array(height);
+    this.ezPrevRight = new Float32Array(height);
+    this.ezPrevTop = new Float32Array(width);
+    this.ezPrevBottom = new Float32Array(width);
     this.ca = new Float32Array(6);
     this.cb = new Float32Array(6);
     this._initCoefficients();
@@ -24,6 +28,11 @@ export class FdtdCpuSolver {
     const cDtDx = this.dt / (this.dx * MU_0);
     this.cDtDx = cDtDx;
     for (let k = 0; k <= 5; k++) {
+      if (k === 5) {
+        this.ca[k] = 0.0;
+        this.cb[k] = 0.0;
+        continue;
+      }
       const spec = MATERIAL_SPECS[k] || MATERIAL_SPECS[0];
       const eps = spec.epsR * EPSILON_0;
       const sigma = spec.sigma;
@@ -37,6 +46,10 @@ export class FdtdCpuSolver {
     this.ez.fill(0);
     this.hx.fill(0);
     this.hy.fill(0);
+    this.ezPrevLeft.fill(0);
+    this.ezPrevRight.fill(0);
+    this.ezPrevTop.fill(0);
+    this.ezPrevBottom.fill(0);
     this.stepCount = 0;
   }
 }
@@ -84,14 +97,28 @@ FdtdCpuSolver.prototype._applyMur = function () {
   const factor = (SPEED_OF_LIGHT * this.dt - this.dx) / (SPEED_OF_LIGHT * this.dt + this.dx);
   for (let y = 0; y < h; y++) {
     const row = y * w;
-    this.ez[row] += factor * (this.ez[row + 1] - this.ez[row]);
-    this.ez[row + (w - 1)] += factor * (this.ez[row + (w - 2)] - this.ez[row + (w - 1)]);
+    const ez1 = this.ez[row + 1];
+    const newLeft = this.ezPrevLeft[y] + factor * (ez1 - this.ez[row]);
+    this.ezPrevLeft[y] = ez1;
+    this.ez[row] = newLeft;
+
+    const ezIn = this.ez[row + (w - 2)];
+    const newRight = this.ezPrevRight[y] + factor * (ezIn - this.ez[row + (w - 1)]);
+    this.ezPrevRight[y] = ezIn;
+    this.ez[row + (w - 1)] = newRight;
   }
   const lastRow = (h - 1) * w;
   const prevRow = (h - 2) * w;
   for (let x = 0; x < w; x++) {
-    this.ez[x] += factor * (this.ez[w + x] - this.ez[x]);
-    this.ez[lastRow + x] += factor * (this.ez[prevRow + x] - this.ez[lastRow + x]);
+    const ez1 = this.ez[w + x];
+    const newTop = this.ezPrevTop[x] + factor * (ez1 - this.ez[x]);
+    this.ezPrevTop[x] = ez1;
+    this.ez[x] = newTop;
+
+    const ezIn = this.ez[prevRow + x];
+    const newBottom = this.ezPrevBottom[x] + factor * (ezIn - this.ez[lastRow + x]);
+    this.ezPrevBottom[x] = ezIn;
+    this.ez[lastRow + x] = newBottom;
   }
 };
 
