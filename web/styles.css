@@ -1,0 +1,44 @@
+:root {
+  --bg-primary: #0a0e14;
+  --bg-panel: #111722;
+  --bg-card: #182030;
+  --border-color: #26334d;
+  --accent-cyan: #00e5ff;
+  --accent-green: #00e676;
+  --text-main: #e2e8f0;
+  --text-muted: #8899ac;
+  --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  font-family: var(--font-stack);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+header.hud-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background-color: var(--bg-panel);
+  border-bottom: 1px solid var(--border-color);
+  font-size: 13px;
+  user-select: none;
+}
+
+.hud-brand {
+  font-weight: 700;
+  color: var(--accent-cyan);
+  letter-spacing: 1px;
+}
