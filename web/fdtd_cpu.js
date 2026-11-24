@@ -104,3 +104,36 @@ FdtdCpuSolver.prototype.probeDbm = function (x, y) {
   const dbm = pMw <= 1e-15 ? -120.0 : Math.max(-120.0, Math.min(30.0, 10.0 * Math.log10(pMw)));
   return { dbm, ezAbs: val, material: this.materials[gy * this.width + gx] || 0 };
 };
+
+FdtdCpuSolver.prototype.renderToImageData = function (imgData, viewMode = '2d', minDbm = -90.0, maxDbm = 10.0) {
+  const d = imgData.data, w = this.width, h = this.height, ez = this.ez, mats = this.materials;
+  const is25D = viewMode === '25d';
+  for (let y = 0; y < h; y++) {
+    const row = y * w;
+    for (let x = 0; x < w; x++) {
+      const idx = row + x, px = idx * 4;
+      const mat = mats[idx];
+      if (mat > 0) {
+        const spec = MATERIAL_SPECS[mat] || MATERIAL_SPECS[0];
+        d[px] = spec.color[0]; d[px + 1] = spec.color[1]; d[px + 2] = spec.color[2]; d[px + 3] = 255;
+        continue;
+      }
+      const val = ez[idx], absVal = Math.abs(val);
+      const s = (absVal * absVal) / 376.73031346177;
+      const dbm = s <= 1e-18 ? -120.0 : Math.max(-120.0, Math.min(30.0, 10.0 * Math.log10(s * 1000.0)));
+      const norm = Math.max(0, Math.min(1, (dbm - minDbm) / (maxDbm - minDbm)));
+      const rgba = turboColormapRgba(norm);
+      if (is25D) {
+        const slopeX = (x < w - 1 ? ez[idx + 1] : val) - (x > 0 ? ez[idx - 1] : val);
+        const slopeY = (y < h - 1 ? ez[idx + w] : val) - (y > 0 ? ez[idx - w] : val);
+        const shade = Math.max(0.4, Math.min(1.4, 1.0 + (slopeX + slopeY) * 0.8));
+        d[px] = Math.min(255, Math.round(rgba[0] * shade));
+        d[px + 1] = Math.min(255, Math.round(rgba[1] * shade));
+        d[px + 2] = Math.min(255, Math.round(rgba[2] * shade));
+      } else {
+        d[px] = rgba[0]; d[px + 1] = rgba[1]; d[px + 2] = rgba[2];
+      }
+      d[px + 3] = 255;
+    }
+  }
+};
