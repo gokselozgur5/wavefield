@@ -17,3 +17,19 @@ fn test_wasm_abi_lifecycle() {
         wavefield_grid_destroy(ptr);
     }
 }
+
+#[test]
+fn test_wasm_abi_invalid_inputs_return_null() {
+    let p1 = wavefield_grid_create(3, 10, 0.05);
+    assert!(p1.is_null());
+    let p2 = wavefield_grid_create(10, 2, 0.05);
+    assert!(p2.is_null());
+    let p3 = wavefield_grid_create(10, 10, -0.05);
+    assert!(p3.is_null());
+    let p4 = wavefield_grid_create(10, 10, f64::NAN);
+    assert!(p4.is_null());
+    let p5 = wavefield_grid_create(10, 10, f64::INFINITY);
+    assert!(p5.is_null());
+    let p6 = wavefield_grid_create(5_000_000, 5_000_000, 0.05);
+    assert!(p6.is_null());
+}
