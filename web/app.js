@@ -50,3 +50,24 @@ export function syncUiFromState() {
   const elWl = byId('telemetry-wavelength');
   if (elWl) elWl.textContent = wl.toFixed(3) + ' m';
 }
+
+export function computeActiveSources() {
+  const sources = [];
+  const centerX = Math.floor(state.txX * SIM_WIDTH);
+  const centerY = Math.floor(state.txY * SIM_HEIGHT);
+  const num = state.elements;
+  const steerRad = (state.steerDeg * Math.PI) / 180.0;
+  const deltaPhi = -2.0 * Math.PI * 0.5 * Math.sin(steerRad);
+  const spacingCells = 3;
+  const startOffset = -((num - 1) / 2.0) * spacingCells;
+  for (let i = 0; i < num; i++) {
+    sources.push({
+      x: centerX,
+      y: Math.round(centerY + startOffset + i * spacingCells),
+      amp: 2.0 / Math.sqrt(num),
+      freq: state.freqGhz * 1e9,
+      phase: i * deltaPhi,
+    });
+  }
+  return sources;
+}
