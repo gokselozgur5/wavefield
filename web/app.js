@@ -97,12 +97,23 @@ export function paintObstacle(gx, gy, brush) {
   }
 }
 
-export function handlePointerAction(e, canvas) {
+export function getCanvasPointerCell(e, canvas) {
   const rect = canvas.getBoundingClientRect();
-  const scaleX = canvas.width / rect.width;
-  const scaleY = canvas.height / rect.height;
-  const gx = Math.floor((e.clientX - rect.left) * scaleX);
-  const gy = Math.floor((e.clientY - rect.top) * scaleY);
+  const scale = Math.min(rect.width / canvas.width, rect.height / canvas.height);
+  const renderW = canvas.width * scale;
+  const renderH = canvas.height * scale;
+  const offX = rect.left + (rect.width - renderW) / 2.0;
+  const offY = rect.top + (rect.height - renderH) / 2.0;
+  const gx = Math.floor((e.clientX - offX) / scale);
+  const gy = Math.floor((e.clientY - offY) / scale);
+  return {
+    gx: Math.max(0, Math.min(canvas.width - 1, gx)),
+    gy: Math.max(0, Math.min(canvas.height - 1, gy)),
+  };
+}
+
+export function handlePointerAction(e, canvas) {
+  const { gx, gy } = getCanvasPointerCell(e, canvas);
   if (state.brush === 'move-tx') {
     state.txX = Math.max(0.05, Math.min(0.95, gx / canvas.width));
     state.txY = Math.max(0.05, Math.min(0.95, gy / canvas.height));
@@ -143,9 +154,7 @@ export function setupEventListeners(canvas) {
   canvas.addEventListener('mousemove', (e) => {
     if (state.isDrawing) handlePointerAction(e, canvas);
     else {
-      const rect = canvas.getBoundingClientRect();
-      const gx = Math.floor((e.clientX - rect.left) * (canvas.width / rect.width));
-      const gy = Math.floor((e.clientY - rect.top) * (canvas.height / rect.height));
+      const { gx, gy } = getCanvasPointerCell(e, canvas);
       const p = state.solver.probeDbm(gx, gy);
       const elP = document.getElementById('telemetry-probe');
       if (elP) elP.textContent = `${p.dbm.toFixed(1)} dBm (|Ez| ${p.ezAbs.toFixed(2)} V/m)`;
