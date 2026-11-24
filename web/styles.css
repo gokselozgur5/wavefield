@@ -1,13 +1,29 @@
+/* MIL-SPEC C2 TACTICAL RADAR CONSOLE (AN/SPQ-9B) THEME */
 :root {
-  --bg-primary: #0a0e14;
-  --bg-panel: #111722;
-  --bg-card: #182030;
-  --border-color: #26334d;
-  --accent-cyan: #00e5ff;
-  --accent-green: #00e676;
-  --text-main: #e2e8f0;
-  --text-muted: #8899ac;
-  --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --c2-bg-black: #040807;
+  --c2-bg-dark: #08110e;
+  --c2-panel-bg: #0c1814;
+  --c2-card-bg: #10201a;
+  --c2-border: #1a382c;
+  --c2-border-bright: #295744;
+  
+  --phosphor-green: #33ff66;
+  --phosphor-dim: #1e993e;
+  --phosphor-glow: rgba(51, 255, 102, 0.25);
+  
+  --amber-radar: #ffb300;
+  --amber-dim: #996b00;
+  --amber-glow: rgba(255, 179, 0, 0.25);
+  
+  --crimson-alert: #ff3344;
+  --cyan-sub: #00e5ff;
+  
+  --text-main: #d0f0db;
+  --text-muted: #6b937e;
+  --text-dim: #3d5e4f;
+  
+  --font-mono: "SF Mono", "Consolas", "Courier New", monospace;
+  --font-tactical: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", monospace;
 }
 
 * {
@@ -16,115 +32,564 @@
   padding: 0;
 }
 
-body {
-  background-color: var(--bg-primary);
+body.c2-radar-theme {
+  background-color: var(--c2-bg-black);
   color: var(--text-main);
-  font-family: var(--font-stack);
+  font-family: var(--font-mono);
   display: flex;
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
+  user-select: none;
+  letter-spacing: 0.5px;
 }
 
-header.hud-bar {
+/* CRT SCANLINE & VIGNETTE OVERLAY */
+.crt-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9999;
+  background: 
+    linear-gradient(rgba(18, 30, 24, 0) 50%, rgba(0, 0, 0, 0.45) 50%),
+    radial-gradient(circle at center, transparent 65%, rgba(0, 0, 0, 0.8) 100%);
+  background-size: 100% 4px, 100% 100%;
+  opacity: 0.85;
+}
+
+body.scanlines-disabled .crt-overlay {
+  display: none;
+}
+
+/* HEADER C2 HUD BAR */
+header.c2-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 16px;
-  background-color: var(--bg-panel);
-  border-bottom: 1px solid var(--border-color);
-  font-size: 13px;
-  user-select: none;
+  padding: 6px 14px;
+  background-color: var(--c2-panel-bg);
+  border-bottom: 2px solid var(--c2-border);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+  z-index: 100;
+  flex-shrink: 0;
 }
 
-.hud-brand {
-  font-weight: 700;
-  color: var(--accent-cyan);
+.c2-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.c2-callsign {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--phosphor-green);
+  text-shadow: 0 0 6px var(--phosphor-glow);
+  letter-spacing: 1.5px;
+}
+
+.c2-subcall {
+  font-size: 9px;
+  color: var(--text-muted);
   letter-spacing: 1px;
 }
 
-.hud-telemetry {
+.c2-telemetry {
   display: flex;
-  gap: 16px;
+  gap: 14px;
   align-items: center;
 }
 
+.telemetry-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-left: 1px solid var(--c2-border);
+  padding-left: 10px;
+}
+
+.telem-label {
+  font-size: 8.5px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.telem-val {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.telem-val strong {
+  color: var(--phosphor-green);
+}
+
+.telem-val.status-ok strong {
+  color: var(--phosphor-green);
+}
+
 .badge {
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-weight: 600;
-  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 2px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
 }
 
 .badge-engine {
-  background-color: #1e3a5f;
-  color: var(--accent-cyan);
-  border: 1px solid #2a5288;
+  background-color: #0d281a;
+  color: var(--phosphor-green);
+  border: 1px solid var(--phosphor-dim);
 }
 
-main.app-layout {
+.badge-tactical {
+  background-color: #2e1c02;
+  color: var(--amber-radar);
+  border: 1px solid var(--amber-dim);
+}
+
+/* MAIN LAYOUT */
+main.c2-layout {
   display: flex;
   flex: 1;
   min-height: 0;
+  position: relative;
 }
 
-aside.sidebar {
-  width: 280px;
-  background-color: var(--bg-panel);
-  border-right: 1px solid var(--border-color);
-  padding: 16px;
+/* C2 SIDEBAR */
+aside.c2-sidebar {
+  width: 320px;
+  background-color: var(--c2-dark);
+  border-right: 2px solid var(--c2-border);
+  padding: 12px 14px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
+  z-index: 50;
+}
+
+.panel-section-title {
+  font-size: 9.5px;
+  font-weight: 800;
+  color: var(--amber-radar);
+  background: rgba(255, 179, 0, 0.08);
+  padding: 3px 6px;
+  border-left: 3px solid var(--amber-radar);
+  letter-spacing: 1px;
 }
 
 .control-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
 }
 
 .control-group label {
-  font-size: 12px;
+  font-size: 10.5px;
   color: var(--text-muted);
-  font-weight: 500;
+  font-weight: 600;
 }
 
-select, input[type="range"], button {
-  width: 100%;
-  background: var(--bg-card);
+.c2-highlight {
+  color: var(--phosphor-green);
+  font-weight: 700;
+}
+
+/* CUSTOM CONTROLS (SELECT, SLIDERS, BUTTONS) */
+.c2-select {
+  background: var(--c2-card-bg);
   color: var(--text-main);
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  padding: 6px 10px;
-  font-size: 13px;
+  border: 1px solid var(--c2-border-bright);
+  padding: 6px 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  cursor: pointer;
+  outline: none;
+}
+
+.c2-select:focus {
+  border-color: var(--phosphor-green);
+  box-shadow: 0 0 6px var(--phosphor-glow);
+}
+
+.slider-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.c2-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  background: var(--c2-card-bg);
+  border: 1px solid var(--c2-border-bright);
+  outline: none;
   cursor: pointer;
 }
 
-button:hover {
-  background: #222d42;
-  border-color: var(--accent-cyan);
+.c2-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  background: var(--phosphor-green);
+  border: 1px solid #000;
+  cursor: ew-resize;
+  box-shadow: 0 0 5px var(--phosphor-glow);
 }
 
-.button-row {
+.scale-ticks {
   display: flex;
+  justify-content: space-between;
+  font-size: 8px;
+  color: var(--text-dim);
+  padding: 0 2px;
+}
+
+/* STEERING WHEEL CONSOLE */
+.steering-console {
+  background: var(--c2-card-bg);
+  border: 1px solid var(--c2-border);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
   gap: 8px;
 }
 
-.canvas-container {
-  flex: 1;
+.steering-readout {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.steering-wheel-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 6px 0;
+}
+
+.antenna-steering-dial {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #0f241c 0%, #050d09 100%);
+  border: 2px solid var(--phosphor-dim);
+  box-shadow: 0 0 10px rgba(51, 255, 102, 0.15), inset 0 0 8px rgba(0, 0, 0, 0.8);
+  cursor: pointer;
+  outline: none;
+}
+
+.antenna-steering-dial:focus {
+  border-color: var(--phosphor-green);
+  box-shadow: 0 0 12px var(--phosphor-glow);
+}
+
+.dial-outer-ring {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.dial-mark {
+  position: absolute;
+  font-size: 7.5px;
+  color: var(--text-dim);
+  transform-origin: center;
+}
+
+.mark-n60 { top: 20px; left: 6px; }
+.mark-n30 { top: 6px; left: 22px; }
+.mark-zero { top: 2px; left: 43px; color: var(--phosphor-green); font-weight: 700; }
+.mark-p30 { top: 6px; right: 22px; }
+.mark-p60 { top: 20px; right: 6px; }
+
+.dial-needle {
+  position: absolute;
+  top: 14px;
+  left: 48px;
+  width: 4px;
+  height: 36px;
+  background: var(--amber-radar);
+  border-radius: 2px;
+  transform-origin: 2px 36px;
+  transform: rotate(0deg);
+  box-shadow: 0 0 6px var(--amber-glow);
+  transition: transform 0.05s ease-out;
+}
+
+.dial-center-cap {
+  position: absolute;
+  top: 36px;
+  left: 36px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #08110e;
+  border: 1px solid var(--c2-border-bright);
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
-  background-color: #05070a;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--amber-radar);
 }
 
+/* TACTICAL MATERIAL PALETTE MATRIX */
+.tactical-material-matrix {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.mat-cell {
+  background: var(--c2-card-bg);
+  border: 1px solid var(--c2-border);
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  cursor: pointer;
+  text-align: left;
+  outline: none;
+  font-family: var(--font-mono);
+  transition: all 0.15s ease;
+}
+
+.mat-cell:hover {
+  background: #142a22;
+  border-color: var(--c2-border-bright);
+}
+
+.mat-cell.active {
+  background: #123024;
+  border-color: var(--phosphor-green);
+  box-shadow: 0 0 6px rgba(51, 255, 102, 0.2);
+}
+
+.mat-badge {
+  align-self: flex-start;
+  font-size: 8px;
+  font-weight: 800;
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
+.tx-badge { background: #33ff66; color: #000; }
+.pec-badge { background: #ffd700; color: #000; }
+.con-badge { background: #8c8c91; color: #000; }
+.gls-badge { background: #64c8f0; color: #000; }
+.fol-badge { background: #28a03c; color: #fff; }
+.vac-badge { background: #1c2e26; color: #6b937e; border: 1px solid #295744; }
+
+.mat-name {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.mat-spec {
+  font-size: 8px;
+  color: var(--text-dim);
+}
+
+/* OVERLAY TOGGLES */
+.overlay-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 0;
+}
+
+.c2-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10.5px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.c2-toggle input {
+  display: none;
+}
+
+.toggle-indicator {
+  width: 14px;
+  height: 14px;
+  background: var(--c2-card-bg);
+  border: 1px solid var(--c2-border-bright);
+  display: inline-block;
+  position: relative;
+}
+
+.c2-toggle input:checked + .toggle-indicator {
+  background: var(--phosphor-green);
+  box-shadow: 0 0 5px var(--phosphor-glow);
+}
+
+.c2-toggle input:checked + .toggle-indicator::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 6px;
+  height: 6px;
+  background: #000;
+}
+
+/* TACTICAL BUTTONS */
+.c2-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.c2-btn {
+  flex: 1;
+  background: var(--c2-card-bg);
+  color: var(--text-main);
+  border: 1px solid var(--c2-border-bright);
+  padding: 6px 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  text-transform: uppercase;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.c2-btn:hover {
+  background: #183327;
+  border-color: var(--phosphor-green);
+}
+
+.c2-btn.btn-warning:hover {
+  border-color: var(--amber-radar);
+  color: var(--amber-radar);
+}
+
+.c2-btn.btn-danger:hover {
+  border-color: var(--crimson-alert);
+  color: var(--crimson-alert);
+}
+
+/* RADAR PPI DISPLAY CONTAINER */
+.c2-radar-scope {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at center, #020705 0%, #000201 100%);
+  overflow: hidden;
+}
+
+/* SCOPE HUD FRAMING & RETICLES */
+.scope-framing {
+  position: absolute;
+  inset: 12px;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.scope-reticle {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-color: var(--phosphor-dim);
+  border-style: solid;
+}
+
+.scope-corner-tl { top: 0; left: 0; border-width: 2px 0 0 2px; }
+.scope-corner-tr { top: 0; right: 0; border-width: 2px 2px 0 0; }
+.scope-corner-bl { bottom: 0; left: 0; border-width: 0 0 2px 2px; }
+.scope-corner-br { bottom: 0; right: 0; border-width: 0 2px 2px 0; }
+
+.scope-center-label {
+  position: absolute;
+  top: 4px;
+  left: 24px;
+  font-size: 9px;
+  color: var(--phosphor-dim);
+  letter-spacing: 1px;
+}
+
+.scope-bearing-label-top {
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 8.5px;
+  color: var(--phosphor-dim);
+}
+
+.scope-bearing-label-right {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+  font-size: 8.5px;
+  color: var(--phosphor-dim);
+}
+
+.scope-bearing-label-bottom {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 8.5px;
+  color: var(--phosphor-dim);
+}
+
+.scope-bearing-label-left {
+  position: absolute;
+  top: 50%;
+  left: 4px;
+  transform: translateY(-50%);
+  font-size: 8.5px;
+  color: var(--phosphor-dim);
+}
+
+/* CANVASES */
 canvas#sim-canvas {
   width: 100%;
   height: 100%;
   object-fit: contain;
   image-rendering: pixelated;
   cursor: crosshair;
+  z-index: 10;
+}
+
+canvas#radar-polar-canvas {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  z-index: 15;
+}
+
+/* ACCESSIBILITY / HIDDEN UTILITY */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }
