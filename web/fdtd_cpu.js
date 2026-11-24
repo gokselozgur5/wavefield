@@ -52,6 +52,13 @@ export class FdtdCpuSolver {
     this.ezPrevBottom.fill(0);
     this.stepCount = 0;
   }
+
+  setDx(dx) {
+    this.dx = dx;
+    this.dt = (0.98 * dx) / (Math.SQRT2 * SPEED_OF_LIGHT);
+    this._initCoefficients();
+    this.reset();
+  }
 }
 
 FdtdCpuSolver.prototype.step = function (subSteps = 1, sources = []) {
