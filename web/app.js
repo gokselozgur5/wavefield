@@ -154,10 +154,10 @@ export async function main() {
     const gpu = await initWebGpuFdtd(SIM_WIDTH, SIM_HEIGHT);
     if (gpu) {
       state.gpuBackend = gpu;
-      if (engineBadge) { engineBadge.textContent = 'WebGPU WGSL'; engineBadge.style.color = '#00e676'; }
-    } else if (engineBadge) engineBadge.textContent = 'CPU FDTD (Fallback)';
+      if (engineBadge) { engineBadge.textContent = 'CPU FDTD (WebGPU Ready)'; engineBadge.style.color = '#00e676'; }
+    } else if (engineBadge) engineBadge.textContent = 'CPU FDTD';
   } catch (_e) {
-    if (engineBadge) engineBadge.textContent = 'CPU FDTD (Fallback)';
+    if (engineBadge) engineBadge.textContent = 'CPU FDTD';
   }
 
   let frames = 0, lastFpsTime = performance.now();
