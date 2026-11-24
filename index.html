@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wavefield — RF & Radar Wave Propagation Simulator</title>
+  <link rel="stylesheet" href="web/styles.css">
+</head>
+<body>
+  <header class="hud-bar">
+    <div class="hud-brand">WAVEFIELD RF HUD</div>
+    <div class="hud-telemetry">
+      <span>Engine: <span id="telemetry-engine" class="badge badge-engine">Detecting...</span></span>
+      <span>FPS: <strong id="telemetry-fps">0</strong></span>
+      <span>Wavelength: <strong id="telemetry-wavelength">0.086 m</strong></span>
+      <span>Probe: <strong id="telemetry-probe">-120 dBm</strong></span>
+    </div>
+  </header>
+  <main class="app-layout">
+    <aside class="sidebar">
+    </aside>
+    <div class="canvas-container">
+      <canvas id="sim-canvas" width="320" height="240"></canvas>
+    </div>
+  </main>
+  <script type="module" src="web/app.js"></script>
+</body>
+</html>
