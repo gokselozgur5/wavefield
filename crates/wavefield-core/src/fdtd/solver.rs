@@ -49,14 +49,18 @@ impl FdtdGrid {
                     5 => MaterialKind::Metal,
                     _ => MaterialKind::FreeSpace,
                 };
-                let props = mat.properties();
-                let eps = props.eps_r * EPSILON_0;
-                let sigma = props.sigma_s_m;
-
-                let ca = (1.0 - (sigma * self.dt_s) / (2.0 * eps))
-                    / (1.0 + (sigma * self.dt_s) / (2.0 * eps));
-                let cb =
-                    (self.dt_s / (eps * self.dx_m)) / (1.0 + (sigma * self.dt_s) / (2.0 * eps));
+                let (ca, cb) = if mat == MaterialKind::Metal {
+                    (0.0, 0.0)
+                } else {
+                    let props = mat.properties();
+                    let eps = props.eps_r * EPSILON_0;
+                    let sigma = props.sigma_s_m;
+                    let factor = (sigma * self.dt_s) / (2.0 * eps);
+                    (
+                        (1.0 - factor) / (1.0 + factor),
+                        (self.dt_s / (eps * self.dx_m)) / (1.0 + factor),
+                    )
+                };
 
                 let curl_h = (self.hy[hy_row + x] - self.hy[hy_row + (x - 1)])
                     - (self.hx[hx_row_curr + x] - self.hx[hx_row_prev + x]);
