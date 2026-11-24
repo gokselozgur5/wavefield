@@ -20,6 +20,12 @@ export const state = {
   gpuBackend: null,
 };
 
+export function updateGridDx() {
+  const wavelength = 299792458.0 / (state.freqGhz * 1e9);
+  const targetDx = wavelength / 10.0;
+  state.solver.setDx(targetDx);
+}
+
 export function loadPreset(id) {
   const factory = PRESETS[id] || PRESETS['urban-5g'];
   const scene = factory(SIM_WIDTH, SIM_HEIGHT);
@@ -29,6 +35,7 @@ export function loadPreset(id) {
   state.txY = scene.txY;
   state.elements = scene.elements;
   state.steerDeg = scene.steerDeg;
+  updateGridDx();
   state.solver.materials.set(scene.grid);
   state.solver.reset();
   syncUiFromState();
@@ -57,8 +64,10 @@ export function computeActiveSources() {
   const centerY = Math.floor(state.txY * SIM_HEIGHT);
   const num = state.elements;
   const steerRad = (state.steerDeg * Math.PI) / 180.0;
-  const deltaPhi = -2.0 * Math.PI * 0.5 * Math.sin(steerRad);
+  const wavelength = 299792458.0 / (state.freqGhz * 1e9);
   const spacingCells = 3;
+  const dOverLambda = (spacingCells * state.solver.dx) / wavelength;
+  const deltaPhi = -2.0 * Math.PI * dOverLambda * Math.sin(steerRad);
   const startOffset = -((num - 1) / 2.0) * spacingCells;
   for (let i = 0; i < num; i++) {
     sources.push({
@@ -115,7 +124,11 @@ export function setupEventListeners(canvas) {
   };
   on('select-preset', 'change', (e) => loadPreset(e.target.value));
   on('select-brush', 'change', (e) => { state.brush = e.target.value; });
-  on('slider-freq', 'input', (e) => { state.freqGhz = parseFloat(e.target.value); syncUiFromState(); });
+  on('slider-freq', 'input', (e) => {
+    state.freqGhz = parseFloat(e.target.value);
+    updateGridDx();
+    syncUiFromState();
+  });
   on('slider-elements', 'input', (e) => { state.elements = parseInt(e.target.value, 10); syncUiFromState(); });
   on('slider-steer', 'input', (e) => { state.steerDeg = parseInt(e.target.value, 10); syncUiFromState(); });
   on('select-view', 'change', (e) => { state.viewMode = e.target.value; });
