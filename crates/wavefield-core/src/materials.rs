@@ -72,9 +72,18 @@ impl MaterialKind {
     /// Normal incidence power reflection coefficient R from free space into this medium.
     #[inline]
     pub fn normal_power_reflection_coeff(self) -> f64 {
-        let n = self.properties().eps_r.sqrt();
-        let r_ampl = (n - 1.0) / (n + 1.0);
-        r_ampl * r_ampl
+        let props = self.properties();
+        if props.sigma_s_m >= 1e4 {
+            return 1.0;
+        }
+        let f_ref = 2.4e9;
+        let eps_im = props.sigma_s_m / (2.0 * std::f64::consts::PI * f_ref * EPSILON_0);
+        let mod_eps_sq = props.eps_r * props.eps_r + eps_im * eps_im;
+        let n_r = ((mod_eps_sq.sqrt() + props.eps_r) * 0.5).sqrt();
+        let n_i = ((mod_eps_sq.sqrt() - props.eps_r) * 0.5).sqrt();
+        let num = (n_r - 1.0) * (n_r - 1.0) + n_i * n_i;
+        let den = (n_r + 1.0) * (n_r + 1.0) + n_i * n_i;
+        (num / den).clamp(0.0, 1.0)
     }
 
     /// Approximate attenuation constant alpha in Nepers/meter for low-loss or general dielectrics.
