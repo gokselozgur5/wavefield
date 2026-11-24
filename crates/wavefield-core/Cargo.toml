@@ -1,0 +1,11 @@
+[package]
+name = "wavefield-core"
+version = "0.1.0"
+edition = "2021"
+description = "Zero-dependency Rust/WASM physics core for 3D RF and radar wave propagation"
+license = "MIT"
+
+[lib]
+crate-type = ["rlib", "cdylib"]
+
+[dependencies]
