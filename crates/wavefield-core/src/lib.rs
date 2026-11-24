@@ -5,3 +5,4 @@ pub mod fdtd;
 pub mod heatmap;
 pub mod materials;
 pub mod propagation;
+pub mod wasm_abi;
