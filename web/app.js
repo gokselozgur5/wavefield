@@ -13,6 +13,8 @@ export const state = {
   steerDeg: 0,
   viewMode: '2d',
   paused: false,
+  showAzimuthGrid: true,
+  showScanlines: true,
   txX: 0.5,
   txY: 0.2,
   isDrawing: false,
@@ -41,11 +43,35 @@ export function loadPreset(id) {
   syncUiFromState();
 }
 
+export function computeRfLinkBudget() {
+  const c = 299792458.0;
+  const fHz = state.freqGhz * 1e9;
+  const wl = c / fHz;
+  const dRefMeters = 20.0;
+  const fsplDb = 20.0 * Math.log10((4.0 * Math.PI * dRefMeters * fHz) / c);
+  const directivityDbi = 10.0 * Math.log10(Math.max(1, state.elements)) + 6.0;
+  const txPowerDbm = 30.0;
+  const eirpDbm = txPowerDbm + directivityDbi;
+  const rxSensDbm = -95.0;
+  const estimatedRxDbm = eirpDbm - fsplDb;
+  const linkMarginDb = estimatedRxDbm - rxSensDbm;
+  return {
+    wavelength: wl,
+    fsplDb: fsplDb,
+    directivityDbi: directivityDbi,
+    linkMarginDb: linkMarginDb,
+    eirpDbm: eirpDbm,
+  };
+}
+
 export function syncUiFromState() {
   const byId = (id) => (typeof document !== 'undefined' ? document.getElementById(id) : null);
   const elPreset = byId('select-preset'), elFreq = byId('slider-freq'), elFreqLbl = byId('label-freq');
   const elElems = byId('slider-elements'), elElemsLbl = byId('label-elements');
   const elSteer = byId('slider-steer'), elSteerLbl = byId('label-steer');
+  const elNeedle = byId('steering-needle'), elDialVal = byId('dial-steer-val');
+  const elSteerDial = byId('antenna-steering-dial');
+
   if (elPreset) elPreset.value = state.presetId;
   if (elFreq) elFreq.value = state.freqGhz;
   if (elFreqLbl) elFreqLbl.textContent = Number(state.freqGhz).toFixed(2);
@@ -53,9 +79,35 @@ export function syncUiFromState() {
   if (elElemsLbl) elElemsLbl.textContent = state.elements;
   if (elSteer) elSteer.value = state.steerDeg;
   if (elSteerLbl) elSteerLbl.textContent = state.steerDeg;
-  const wl = 0.299792458 / state.freqGhz;
+
+  if (elNeedle) elNeedle.style.transform = `rotate(${state.steerDeg}deg)`;
+  if (elDialVal) elDialVal.textContent = `${state.steerDeg}°`;
+  if (elSteerDial) elSteerDial.setAttribute('aria-valuenow', state.steerDeg);
+
+  const budget = computeRfLinkBudget();
   const elWl = byId('telemetry-wavelength');
-  if (elWl) elWl.textContent = wl.toFixed(3) + ' m';
+  if (elWl) elWl.textContent = budget.wavelength.toFixed(3) + ' m';
+  const elFspl = byId('telemetry-fspl');
+  if (elFspl) elFspl.textContent = budget.fsplDb.toFixed(1) + ' dB';
+  const elDir = byId('telemetry-directivity');
+  if (elDir) elDir.textContent = '+' + budget.directivityDbi.toFixed(1) + ' dBi';
+  const elMarg = byId('telemetry-margin');
+  if (elMarg) {
+    const sign = budget.linkMarginDb >= 0 ? '+' : '';
+    elMarg.textContent = `${sign}${budget.linkMarginDb.toFixed(1)} dB`;
+  }
+
+  const matButtons = typeof document !== 'undefined' ? document.querySelectorAll('.mat-cell') : [];
+  matButtons.forEach((btn) => {
+    if (btn.getAttribute('data-brush') === state.brush) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+
+  const selectBrush = byId('select-brush');
+  if (selectBrush) selectBrush.value = state.brush;
 }
 
 export function computeActiveSources() {
@@ -127,6 +179,63 @@ export function handlePointerAction(e, canvas) {
   }
 }
 
+export function renderPolarAzimuthOverlay(ctx, width, height) {
+  ctx.clearRect(0, 0, width, height);
+  if (!state.showAzimuthGrid) return;
+
+  const originX = Math.floor(state.txX * width);
+  const originY = Math.floor(state.txY * height);
+
+  ctx.save();
+  ctx.lineWidth = 1.0;
+  ctx.strokeStyle = 'rgba(51, 255, 102, 0.22)';
+  ctx.fillStyle = 'rgba(51, 255, 102, 0.6)';
+  ctx.font = '8px monospace';
+
+  const rings = [30, 60, 90, 130, 180];
+  rings.forEach((r, idx) => {
+    ctx.beginPath();
+    ctx.arc(originX, originY, r, 0, 2 * Math.PI);
+    ctx.stroke();
+    ctx.fillText(`${(idx + 1) * 25}m`, originX + r + 2, originY - 2);
+  });
+
+  const anglesDeg = [-60, -45, -30, -15, 0, 15, 30, 45, 60];
+  const maxR = 190;
+  anglesDeg.forEach((deg) => {
+    const rad = (deg * Math.PI) / 180.0;
+    const endX = originX + maxR * Math.cos(rad);
+    const endY = originY + maxR * Math.sin(rad);
+    ctx.beginPath();
+    ctx.moveTo(originX, originY);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+  });
+
+  const steerRad = (state.steerDeg * Math.PI) / 180.0;
+  const beamX = originX + 210 * Math.cos(steerRad);
+  const beamY = originY + 210 * Math.sin(steerRad);
+
+  ctx.strokeStyle = 'rgba(255, 179, 0, 0.85)';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(originX, originY);
+  ctx.lineTo(beamX, beamY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.fillStyle = 'rgba(255, 179, 0, 0.9)';
+  ctx.fillText(`BEAM ${state.steerDeg}°`, beamX - 20, Math.max(12, beamY - 4));
+
+  ctx.fillStyle = '#33ff66';
+  ctx.beginPath();
+  ctx.arc(originX, originY, 3, 0, 2 * Math.PI);
+  ctx.fill();
+
+  ctx.restore();
+}
+
 export function setupEventListeners(canvas) {
   if (typeof document === 'undefined') return;
   const on = (id, evt, fn) => {
@@ -134,23 +243,104 @@ export function setupEventListeners(canvas) {
     if (el) el.addEventListener(evt, fn);
   };
   on('select-preset', 'change', (e) => loadPreset(e.target.value));
-  on('select-brush', 'change', (e) => { state.brush = e.target.value; });
+  on('select-brush', 'change', (e) => {
+    state.brush = e.target.value;
+    syncUiFromState();
+  });
   on('slider-freq', 'input', (e) => {
     state.freqGhz = parseFloat(e.target.value);
     updateGridDx();
     syncUiFromState();
   });
-  on('slider-elements', 'input', (e) => { state.elements = parseInt(e.target.value, 10); syncUiFromState(); });
-  on('slider-steer', 'input', (e) => { state.steerDeg = parseInt(e.target.value, 10); syncUiFromState(); });
-  on('select-view', 'change', (e) => { state.viewMode = e.target.value; });
+  on('slider-elements', 'input', (e) => {
+    state.elements = parseInt(e.target.value, 10);
+    syncUiFromState();
+  });
+  on('slider-steer', 'input', (e) => {
+    state.steerDeg = parseInt(e.target.value, 10);
+    syncUiFromState();
+  });
+  on('select-view', 'change', (e) => {
+    state.viewMode = e.target.value;
+  });
   on('btn-pause', 'click', (e) => {
     state.paused = !state.paused;
     e.target.textContent = state.paused ? 'Resume' : 'Pause';
   });
   on('btn-reset', 'click', () => state.solver.reset());
-  on('btn-clear-walls', 'click', () => { state.solver.materials.fill(0); state.solver.reset(); });
+  on('btn-clear-walls', 'click', () => {
+    state.solver.materials.fill(0);
+    state.solver.reset();
+  });
 
-  canvas.addEventListener('mousedown', (e) => { state.isDrawing = true; handlePointerAction(e, canvas); });
+  on('chk-azimuth-grid', 'change', (e) => {
+    state.showAzimuthGrid = e.target.checked;
+  });
+  on('chk-scanlines', 'change', (e) => {
+    state.showScanlines = e.target.checked;
+    if (state.showScanlines) {
+      document.body.classList.remove('scanlines-disabled');
+    } else {
+      document.body.classList.add('scanlines-disabled');
+    }
+  });
+
+  const matButtons = document.querySelectorAll('.mat-cell');
+  matButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const b = btn.getAttribute('data-brush');
+      state.brush = b;
+      syncUiFromState();
+    });
+  });
+
+  const steeringDial = document.getElementById('antenna-steering-dial');
+  if (steeringDial) {
+    let isDraggingDial = false;
+    const updateDialAngle = (clientX, clientY) => {
+      const rect = steeringDial.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2.0;
+      const cy = rect.top + rect.height / 2.0;
+      const dx = clientX - cx;
+      const dy = clientY - cy;
+      let angle = Math.atan2(dx, -dy) * (180.0 / Math.PI);
+      angle = Math.max(-60, Math.min(60, Math.round(angle)));
+      state.steerDeg = angle;
+      syncUiFromState();
+    };
+
+    steeringDial.addEventListener('mousedown', (e) => {
+      isDraggingDial = true;
+      updateDialAngle(e.clientX, e.clientY);
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (isDraggingDial) {
+        updateDialAngle(e.clientX, e.clientY);
+      }
+    });
+
+    window.addEventListener('mouseup', () => {
+      isDraggingDial = false;
+    });
+
+    steeringDial.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+        state.steerDeg = Math.max(-60, state.steerDeg - 1);
+        syncUiFromState();
+        e.preventDefault();
+      } else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+        state.steerDeg = Math.min(60, state.steerDeg + 1);
+        syncUiFromState();
+        e.preventDefault();
+      }
+    });
+  }
+
+  canvas.addEventListener('mousedown', (e) => {
+    state.isDrawing = true;
+    handlePointerAction(e, canvas);
+  });
   canvas.addEventListener('mousemove', (e) => {
     if (state.isDrawing) handlePointerAction(e, canvas);
     else {
@@ -160,7 +350,9 @@ export function setupEventListeners(canvas) {
       if (elP) elP.textContent = `${p.dbm.toFixed(1)} dBm (|Ez| ${p.ezAbs.toFixed(2)} V/m)`;
     }
   });
-  window.addEventListener('mouseup', () => { state.isDrawing = false; });
+  window.addEventListener('mouseup', () => {
+    state.isDrawing = false;
+  });
 }
 
 export async function main() {
@@ -168,6 +360,10 @@ export async function main() {
   const canvas = document.getElementById('sim-canvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d'), imgData = ctx.createImageData(SIM_WIDTH, SIM_HEIGHT);
+
+  const polarCanvas = document.getElementById('radar-polar-canvas');
+  const polarCtx = polarCanvas ? polarCanvas.getContext('2d') : null;
+
   setupEventListeners(canvas);
   loadPreset(state.presetId);
 
@@ -176,8 +372,13 @@ export async function main() {
     const gpu = await initWebGpuFdtd(SIM_WIDTH, SIM_HEIGHT);
     if (gpu) {
       state.gpuBackend = gpu;
-      if (engineBadge) { engineBadge.textContent = 'CPU FDTD (WebGPU Ready)'; engineBadge.style.color = '#00e676'; }
-    } else if (engineBadge) engineBadge.textContent = 'CPU FDTD';
+      if (engineBadge) {
+        engineBadge.textContent = 'CPU FDTD (WebGPU Ready)';
+        engineBadge.style.color = '#33ff66';
+      }
+    } else if (engineBadge) {
+      engineBadge.textContent = 'CPU FDTD';
+    }
   } catch (_e) {
     if (engineBadge) engineBadge.textContent = 'CPU FDTD';
   }
@@ -190,6 +391,10 @@ export async function main() {
     }
     state.solver.renderToImageData(imgData, state.viewMode);
     ctx.putImageData(imgData, 0, 0);
+
+    if (polarCtx) {
+      renderPolarAzimuthOverlay(polarCtx, SIM_WIDTH, SIM_HEIGHT);
+    }
 
     frames++;
     const now = performance.now();
@@ -205,4 +410,3 @@ export async function main() {
 }
 
 if (typeof window !== 'undefined') window.addEventListener('DOMContentLoaded', main);
-
