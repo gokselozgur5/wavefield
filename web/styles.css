@@ -42,3 +42,51 @@ header.hud-bar {
   color: var(--accent-cyan);
   letter-spacing: 1px;
 }
+
+.hud-telemetry {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.badge {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.badge-engine {
+  background-color: #1e3a5f;
+  color: var(--accent-cyan);
+  border: 1px solid #2a5288;
+}
+
+main.app-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+aside.sidebar {
+  width: 280px;
+  background-color: var(--bg-panel);
+  border-right: 1px solid var(--border-color);
+  padding: 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.control-group label {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
