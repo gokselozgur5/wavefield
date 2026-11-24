@@ -3,6 +3,9 @@
 /// Convert an electric field magnitude |Ez| in V/m to equivalent peak power density in dBm/m^2.
 #[inline]
 pub fn ez_to_dbm(ez_abs: f64) -> f64 {
+    if !ez_abs.is_finite() {
+        return -120.0;
+    }
     // 120 * pi approx 376.73031346177 (wave impedance of free space)
     let s = (ez_abs * ez_abs) / 376.73031346177;
     let p_mw = s * 1000.0;
