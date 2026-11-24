@@ -55,3 +55,51 @@ fn test_web_content_covers_wgsl_and_presets() {
     assert!(presets_src.contains("fpv-drone"));
     assert!(presets_src.contains("naval-radar"));
 }
+
+#[test]
+fn test_node_cpu_solver_runtime_smoke() {
+    let repo_root = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap();
+
+    let node_script = r#"
+        import('./web/fdtd_cpu.js').then(({ FdtdCpuSolver }) => {
+            const solver = new FdtdCpuSolver(40, 40, 0.04);
+            const img2d = { data: new Uint8ClampedArray(40 * 40 * 4) };
+            solver.renderToImageData(img2d, '2d');
+            const img25d = { data: new Uint8ClampedArray(40 * 40 * 4) };
+            solver.renderToImageData(img25d, '25d');
+            const sources = [{ x: 20, y: 20, amp: 2.0, freq: 2.4e9, phase: 0 }];
+            for (let i = 0; i < 500; i++) {
+                solver.step(1, sources);
+            }
+            let maxEz = 0;
+            for (let i = 0; i < solver.ez.length; i++) {
+                const v = Math.abs(solver.ez[i]);
+                if (v > maxEz) maxEz = v;
+            }
+            if (!Number.isFinite(maxEz) || maxEz >= 1e3) {
+                process.exit(2);
+            }
+        }).catch(err => {
+            console.error(err);
+            process.exit(1);
+        });
+    "#;
+
+    let output = std::process::Command::new("node")
+        .arg("--input-type=module")
+        .arg("-e")
+        .arg(node_script)
+        .current_dir(repo_root)
+        .output()
+        .expect("Failed to execute node process");
+
+    assert!(
+        output.status.success(),
+        "Node smoke test failed with stderr: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
