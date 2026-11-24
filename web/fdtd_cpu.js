@@ -40,3 +40,41 @@ export class FdtdCpuSolver {
     this.stepCount = 0;
   }
 }
+
+FdtdCpuSolver.prototype.step = function (subSteps = 1, sources = []) {
+  const w = this.width, h = this.height, cDtDx = this.cDtDx;
+  for (let s = 0; s < subSteps; s++) {
+    for (let y = 0; y < h - 1; y++) {
+      const hxRow = y * w, ezRowCurr = y * w, ezRowNext = (y + 1) * w;
+      for (let x = 0; x < w; x++) {
+        this.hx[hxRow + x] -= cDtDx * (this.ez[ezRowNext + x] - this.ez[ezRowCurr + x]);
+      }
+    }
+    const hyW = w - 1;
+    for (let y = 0; y < h; y++) {
+      const hyRow = y * hyW, ezRow = y * w;
+      for (let x = 0; x < hyW; x++) {
+        this.hy[hyRow + x] += cDtDx * (this.ez[ezRow + (x + 1)] - this.ez[ezRow + x]);
+      }
+    }
+    for (let y = 1; y < h - 1; y++) {
+      const ezRow = y * w, hxRowCurr = y * w, hxRowPrev = (y - 1) * w, hyRow = y * hyW;
+      for (let x = 1; x < w - 1; x++) {
+        const idx = ezRow + x;
+        const mat = this.materials[idx] || 0;
+        const curlH = (this.hy[hyRow + x] - this.hy[hyRow + (x - 1)]) - (this.hx[hxRowCurr + x] - this.hx[hxRowPrev + x]);
+        this.ez[idx] = this.ca[mat] * this.ez[idx] + this.cb[mat] * curlH;
+      }
+    }
+    const t = this.stepCount * this.dt;
+    for (let i = 0; i < sources.length; i++) {
+      const src = sources[i];
+      if (src.x >= 0 && src.x < w && src.y >= 0 && src.y < h) {
+        const val = src.amp * Math.sin(2.0 * Math.PI * src.freq * t + src.phase);
+        this.ez[src.y * w + src.x] += val;
+      }
+    }
+    this._applyMur();
+    this.stepCount++;
+  }
+};
