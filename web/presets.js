@@ -33,3 +33,29 @@ export function buildIndoorWifi(w, h) {
   fillRect(g, w, h, Math.floor(w * 0.15), Math.floor(h * 0.15), 10, 10, M);
   return { id: 'indoor-wifi', name: 'Indoor Wi-Fi Floorplan', freqGhz: 2.4, txX: 0.25, txY: 0.75, elements: 1, steerDeg: 0, grid: g };
 }
+
+export function buildFpvDrone(w, h) {
+  const g = new Uint8Array(w * h);
+  const C = MaterialKind.Concrete, F = MaterialKind.Foliage, M = MaterialKind.Metal;
+  fillRect(g, w, h, Math.floor(w * 0.2), Math.floor(h * 0.3), 16, Math.floor(h * 0.4), C);
+  fillRect(g, w, h, Math.floor(w * 0.48), Math.floor(h * 0.2), 24, 24, F);
+  fillRect(g, w, h, Math.floor(w * 0.52), Math.floor(h * 0.6), 28, 22, F);
+  fillRect(g, w, h, Math.floor(w * 0.75), Math.floor(h * 0.25), 20, Math.floor(h * 0.5), M);
+  return { id: 'fpv-drone', name: '5.8 GHz FPV Drone Link', freqGhz: 5.8, txX: 0.1, txY: 0.5, elements: 2, steerDeg: 15, grid: g };
+}
+
+export function buildNavalRadar(w, h) {
+  const g = new Uint8Array(w * h);
+  const M = MaterialKind.Metal;
+  fillRect(g, w, h, Math.floor(w * 0.65), Math.floor(h * 0.3), 8, 24, M);
+  fillRect(g, w, h, Math.floor(w * 0.8), Math.floor(h * 0.6), 14, 10, M);
+  fillRect(g, w, h, Math.floor(w * 0.55), Math.floor(h * 0.75), 10, 8, M);
+  return { id: 'naval-radar', name: '10 GHz X-Band Radar', freqGhz: 10.0, txX: 0.15, txY: 0.5, elements: 8, steerDeg: 25, grid: g };
+}
+
+export const PRESETS = Object.freeze({
+  'urban-5g': buildUrbanCanyon,
+  'indoor-wifi': buildIndoorWifi,
+  'fpv-drone': buildFpvDrone,
+  'naval-radar': buildNavalRadar,
+});
