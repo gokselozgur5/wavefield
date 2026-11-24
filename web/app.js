@@ -140,3 +140,47 @@ export function setupEventListeners(canvas) {
   });
   window.addEventListener('mouseup', () => { state.isDrawing = false; });
 }
+
+export async function main() {
+  if (typeof document === 'undefined') return;
+  const canvas = document.getElementById('sim-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d'), imgData = ctx.createImageData(SIM_WIDTH, SIM_HEIGHT);
+  setupEventListeners(canvas);
+  loadPreset(state.presetId);
+
+  const engineBadge = document.getElementById('telemetry-engine');
+  try {
+    const gpu = await initWebGpuFdtd(SIM_WIDTH, SIM_HEIGHT);
+    if (gpu) {
+      state.gpuBackend = gpu;
+      if (engineBadge) { engineBadge.textContent = 'WebGPU WGSL'; engineBadge.style.color = '#00e676'; }
+    } else if (engineBadge) engineBadge.textContent = 'CPU FDTD (Fallback)';
+  } catch (_e) {
+    if (engineBadge) engineBadge.textContent = 'CPU FDTD (Fallback)';
+  }
+
+  let frames = 0, lastFpsTime = performance.now();
+  function loop() {
+    if (!state.paused) {
+      const sources = computeActiveSources();
+      state.solver.step(4, sources);
+    }
+    state.solver.renderToImageData(imgData, state.viewMode);
+    ctx.putImageData(imgData, 0, 0);
+
+    frames++;
+    const now = performance.now();
+    if (now - lastFpsTime >= 1000) {
+      const elFps = document.getElementById('telemetry-fps');
+      if (elFps) elFps.textContent = Math.round((frames * 1000) / (now - lastFpsTime));
+      frames = 0;
+      lastFpsTime = now;
+    }
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+}
+
+if (typeof window !== 'undefined') window.addEventListener('DOMContentLoaded', main);
+
