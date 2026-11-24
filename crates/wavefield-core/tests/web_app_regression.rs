@@ -36,3 +36,22 @@ fn test_web_assets_exist_and_no_cdn() {
         assert!(!src.contains("jsdelivr"));
     }
 }
+
+#[test]
+fn test_web_content_covers_wgsl_and_presets() {
+    let repo_root = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap();
+
+    let webgpu_src = fs::read_to_string(repo_root.join("web/fdtd_webgpu.js")).unwrap();
+    assert!(webgpu_src.contains("@compute @workgroup_size(8, 8)"));
+    assert!(webgpu_src.contains("initWebGpuFdtd"));
+
+    let presets_src = fs::read_to_string(repo_root.join("web/presets.js")).unwrap();
+    assert!(presets_src.contains("urban-5g"));
+    assert!(presets_src.contains("indoor-wifi"));
+    assert!(presets_src.contains("fpv-drone"));
+    assert!(presets_src.contains("naval-radar"));
+}
