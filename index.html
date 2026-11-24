@@ -3,33 +3,156 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Wavefield — RF & Radar Wave Propagation Simulator</title>
+  <title>AN/SPQ-9B TACTICAL RF RADAR C2 CONSOLE — WAVEFIELD</title>
   <link rel="stylesheet" href="web/styles.css">
 </head>
-<body>
-  <header class="hud-bar">
-    <div class="hud-brand">WAVEFIELD RF HUD</div>
-    <div class="hud-telemetry">
-      <span>Engine: <span id="telemetry-engine" class="badge badge-engine">Detecting...</span></span>
-      <span>FPS: <strong id="telemetry-fps">0</strong></span>
-      <span>Wavelength: <strong id="telemetry-wavelength">0.086 m</strong></span>
-      <span>Probe: <strong id="telemetry-probe">-120 dBm</strong></span>
+<body class="c2-radar-theme">
+  <!-- Scanline & CRT Vignette Overlay Layer -->
+  <div class="crt-overlay" aria-hidden="true"></div>
+
+  <!-- Tactical Top C2 Command Header -->
+  <header class="hud-bar c2-header">
+    <div class="hud-brand c2-brand">
+      <span class="c2-callsign">SYS: AN/SPQ-9B</span>
+      <span class="c2-subcall">TACTICAL PHASED ARRAY RADAR C2 CONSOLE</span>
+    </div>
+
+    <!-- RF Link Budget & Mil-Spec Telemetry Deck -->
+    <div class="hud-telemetry c2-telemetry">
+      <div class="telemetry-block">
+        <span class="telem-label">CORE ENG</span>
+        <span id="telemetry-engine" class="badge badge-engine">Detecting...</span>
+      </div>
+      <div class="telemetry-block">
+        <span class="telem-label">SWEEP RATE</span>
+        <span class="telem-val"><strong id="telemetry-fps">0</strong> <small>FPS</small></span>
+      </div>
+      <div class="telemetry-block">
+        <span class="telem-label">WAVELENGTH &lambda;</span>
+        <span class="telem-val"><strong id="telemetry-wavelength">0.086 m</strong></span>
+      </div>
+      <div class="telemetry-block">
+        <span class="telem-label">RF PROBE / EIRP</span>
+        <span class="telem-val"><strong id="telemetry-probe">-120 dBm</strong></span>
+      </div>
+      <div class="telemetry-block">
+        <span class="telem-label">FSPL ESTIMATE</span>
+        <span class="telem-val"><strong id="telemetry-fspl">83.3 dB</strong></span>
+      </div>
+      <div class="telemetry-block">
+        <span class="telem-label">ANT DIRECTIVITY</span>
+        <span class="telem-val"><strong id="telemetry-directivity">+12.0 dBi</strong></span>
+      </div>
+      <div class="telemetry-block">
+        <span class="telem-label">LINK MARGIN</span>
+        <span class="telem-val status-ok"><strong id="telemetry-margin">+18.5 dB</strong></span>
+      </div>
+      <div class="telemetry-block alert-block">
+        <span class="telem-label">DEFCON / STATUS</span>
+        <span id="radar-defcon-badge" class="badge badge-tactical">ACTIVE TRACK</span>
+      </div>
     </div>
   </header>
-  <main class="app-layout">
-    <aside class="sidebar">
+
+  <!-- Main C2 Radar Workspace -->
+  <main class="app-layout c2-layout">
+    <!-- Tactical Sidebar Control Panel -->
+    <aside class="sidebar c2-sidebar">
+      <div class="panel-section-title">MISSION PARAMETERS</div>
+
       <div class="control-group">
-        <label for="select-preset">Scene Preset</label>
-        <select id="select-preset">
+        <label for="select-preset">TACTICAL SCENARIO</label>
+        <select id="select-preset" class="c2-select">
           <option value="urban-5g">Urban 5G Canyon (3.5 GHz)</option>
           <option value="indoor-wifi">Indoor Wi-Fi Floorplan (2.4 GHz)</option>
           <option value="fpv-drone">5.8 GHz FPV Drone Link</option>
           <option value="naval-radar">10 GHz X-Band Radar</option>
         </select>
       </div>
+
       <div class="control-group">
-        <label for="select-brush">Action / Brush Tool</label>
-        <select id="select-brush">
+        <label for="slider-freq">EMISSION FREQ: <span id="label-freq" class="c2-highlight">3.50</span> GHz</label>
+        <div class="slider-wrapper">
+          <input type="range" id="slider-freq" class="c2-slider" min="1.0" max="12.0" step="0.1" value="3.5">
+          <div class="scale-ticks"><span>1G</span><span>3.5G</span><span>6G</span><span>10G</span><span>12G</span></div>
+        </div>
+      </div>
+
+      <div class="panel-section-title">PHASED ARRAY STEERING</div>
+
+      <div class="steering-console">
+        <div class="steering-readout">
+          <div>ARRAY: <span id="label-elements" class="c2-highlight">4</span> ELEMENTS</div>
+          <div>AZIMUTH: <span id="label-steer" class="c2-highlight">0</span>&deg;</div>
+        </div>
+
+        <!-- Custom Interactive Azimuth Steering Dial / Wheel -->
+        <div class="steering-wheel-container">
+          <div id="antenna-steering-dial" class="antenna-steering-dial" tabindex="0" role="slider" aria-label="Antenna Steering Azimuth" aria-valuemin="-60" aria-valuemax="60" aria-valuenow="0">
+            <div class="dial-outer-ring">
+              <span class="dial-mark mark-n60">-60&deg;</span>
+              <span class="dial-mark mark-n30">-30&deg;</span>
+              <span class="dial-mark mark-zero">0&deg;</span>
+              <span class="dial-mark mark-p30">+30&deg;</span>
+              <span class="dial-mark mark-p60">+60&deg;</span>
+            </div>
+            <div class="dial-needle" id="steering-needle"></div>
+            <div class="dial-center-cap">
+              <span id="dial-steer-val">0&deg;</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label for="slider-elements">ARRAY ELEMENTS (1-8)</label>
+          <input type="range" id="slider-elements" class="c2-slider" min="1" max="8" step="1" value="4">
+        </div>
+
+        <div class="control-group">
+          <label for="slider-steer">BEAM STEERING AZIMUTH</label>
+          <input type="range" id="slider-steer" class="c2-slider" min="-60" max="60" step="1" value="0">
+        </div>
+      </div>
+
+      <div class="panel-section-title">SURFACE / OBSTACLE INTERACTION</div>
+
+      <!-- Tactical Material Palette Matrix Selector -->
+      <div class="control-group">
+        <label>TACTICAL MATERIAL PALETTE</label>
+        <div class="tactical-material-matrix" id="tactical-mat-matrix">
+          <button type="button" class="mat-cell active" data-brush="move-tx" title="Reposition Transmitter / Emitter">
+            <span class="mat-badge tx-badge">TX</span>
+            <span class="mat-name">EMITTER</span>
+            <span class="mat-spec">Array Center</span>
+          </button>
+          <button type="button" class="mat-cell" data-brush="5" title="Perfect Electric Conductor">
+            <span class="mat-badge pec-badge">PEC</span>
+            <span class="mat-name">METAL</span>
+            <span class="mat-spec">&sigma;=1e7 S/m</span>
+          </button>
+          <button type="button" class="mat-cell" data-brush="4" title="Reinforced Concrete Structure">
+            <span class="mat-badge con-badge">CONC</span>
+            <span class="mat-name">CONCRETE</span>
+            <span class="mat-spec">&epsilon;r=5.5</span>
+          </button>
+          <button type="button" class="mat-cell" data-brush="2" title="Architectural Glass Pane">
+            <span class="mat-badge gls-badge">GLS</span>
+            <span class="mat-name">GLASS</span>
+            <span class="mat-spec">&epsilon;r=6.0</span>
+          </button>
+          <button type="button" class="mat-cell" data-brush="3" title="Dense Canopy / Vegetation">
+            <span class="mat-badge fol-badge">FOL</span>
+            <span class="mat-name">FOLIAGE</span>
+            <span class="mat-spec">&epsilon;r=1.3</span>
+          </button>
+          <button type="button" class="mat-cell" data-brush="0" title="Free Space Clearing Vacuum">
+            <span class="mat-badge vac-badge">AIR</span>
+            <span class="mat-name">ERASER</span>
+            <span class="mat-spec">&epsilon;r=1.0</span>
+          </button>
+        </div>
+        <!-- Hidden select for regression test and backward compatibility -->
+        <select id="select-brush" class="sr-only" aria-hidden="true" tabindex="-1">
           <option value="move-tx">Move Transmitter (TX)</option>
           <option value="5">Metal / PEC Barrier</option>
           <option value="4">Concrete Wall</option>
@@ -38,33 +161,59 @@
           <option value="0">Eraser (Free Space)</option>
         </select>
       </div>
+
+      <div class="panel-section-title">VIEWPORT & OVERLAYS</div>
+
       <div class="control-group">
-        <label for="slider-freq">Frequency: <span id="label-freq">3.50</span> GHz</label>
-        <input type="range" id="slider-freq" min="1.0" max="12.0" step="0.1" value="3.5">
-      </div>
-      <div class="control-group">
-        <label for="slider-elements">Array Elements: <span id="label-elements">4</span></label>
-        <input type="range" id="slider-elements" min="1" max="8" step="1" value="4">
-      </div>
-      <div class="control-group">
-        <label for="slider-steer">Beam Steering: <span id="label-steer">0</span>&deg;</label>
-        <input type="range" id="slider-steer" min="-60" max="60" step="1" value="0">
-      </div>
-      <div class="control-group">
-        <label for="select-view">View Mode</label>
-        <select id="select-view">
+        <label for="select-view">RADAR DETECTOR VIEW</label>
+        <select id="select-view" class="c2-select">
           <option value="2d">2D Heatmap (dBm)</option>
           <option value="25d">2.5D Shaded Relief</option>
         </select>
       </div>
-      <div class="button-row">
-        <button id="btn-pause">Pause</button>
-        <button id="btn-reset">Reset Field</button>
-        <button id="btn-clear-walls">Clear Walls</button>
+
+      <div class="overlay-toggles">
+        <label class="c2-toggle">
+          <input type="checkbox" id="chk-azimuth-grid" checked>
+          <span class="toggle-indicator"></span>
+          <span class="toggle-text">Polar Azimuth Range Rings</span>
+        </label>
+        <label class="c2-toggle">
+          <input type="checkbox" id="chk-scanlines" checked>
+          <span class="toggle-indicator"></span>
+          <span class="toggle-text">CRT Phosphor Scanlines</span>
+        </label>
+      </div>
+
+      <div class="panel-section-title">TRANSMITTER COMMAND</div>
+
+      <div class="button-row c2-buttons">
+        <button id="btn-pause" class="c2-btn btn-warning">Pause</button>
+        <button id="btn-reset" class="c2-btn">Reset Field</button>
+        <button id="btn-clear-walls" class="c2-btn btn-danger">Clear Walls</button>
       </div>
     </aside>
-    <div class="canvas-container">
+
+    <!-- Tactical Radar Display Scope -->
+    <div class="canvas-container c2-radar-scope" id="scope-container">
+      <!-- Crosshair HUD Framing -->
+      <div class="scope-framing">
+        <div class="scope-reticle scope-corner-tl"></div>
+        <div class="scope-reticle scope-corner-tr"></div>
+        <div class="scope-reticle scope-corner-bl"></div>
+        <div class="scope-reticle scope-corner-br"></div>
+        <div class="scope-center-label">PPI RADAR SCOPE // RANGE 150m</div>
+        <div class="scope-bearing-label-top">000&deg; BEARING (NORTH)</div>
+        <div class="scope-bearing-label-right">090&deg; (EAST)</div>
+        <div class="scope-bearing-label-bottom">180&deg; (SOUTH)</div>
+        <div class="scope-bearing-label-left">270&deg; (WEST)</div>
+      </div>
+
+      <!-- FDTD Simulation Canvas -->
       <canvas id="sim-canvas" width="320" height="240"></canvas>
+
+      <!-- Polar Radar Azimuth Overlay Canvas -->
+      <canvas id="radar-polar-canvas" class="radar-polar-overlay" width="320" height="240"></canvas>
     </div>
   </main>
   <script type="module" src="web/app.js"></script>
