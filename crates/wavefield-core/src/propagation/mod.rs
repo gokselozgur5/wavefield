@@ -75,7 +75,8 @@ pub fn compute_multipath_rx_dbm(
 
     let e_direct = p_direct_mw.sqrt();
     let e_refl = p_refl_mw.sqrt();
-    let e_total_sq = e_direct * e_direct + e_refl * e_refl + 2.0 * e_direct * e_refl * phase_diff.cos();
+    let e_total_sq =
+        e_direct * e_direct + e_refl * e_refl + 2.0 * e_direct * e_refl * phase_diff.cos();
 
     let p_total_mw = e_total_sq.max(1e-18);
     10.0 * p_total_mw.log10()

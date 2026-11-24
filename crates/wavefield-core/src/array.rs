@@ -12,7 +12,10 @@ impl PhasedArray {
     /// Create a uniform linear array.
     pub fn new(num_elements: usize, spacing_wavelengths: f64, steer_deg: f64) -> Self {
         assert!(num_elements > 0, "Array must have at least 1 element");
-        assert!(spacing_wavelengths > 0.0, "Element spacing must be positive");
+        assert!(
+            spacing_wavelengths > 0.0,
+            "Element spacing must be positive"
+        );
         Self {
             num_elements,
             spacing_wavelengths,

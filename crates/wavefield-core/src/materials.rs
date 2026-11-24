@@ -4,7 +4,7 @@
 pub const SPEED_OF_LIGHT: f64 = 299_792_458.0;
 
 /// Physical constant: vacuum permittivity epsilon_0 (F/m).
-pub const EPSILON_0: f64 = 8.854_187_8128e-12;
+pub const EPSILON_0: f64 = 8.854_187_812_8e-12;
 
 /// Physical constant: vacuum permeability mu_0 (H/m).
 pub const MU_0: f64 = 1.256_637_062_12e-6;
