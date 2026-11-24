@@ -111,19 +111,25 @@ pub unsafe extern "C" fn wavefield_grid_ez_ptr(ptr: *const FdtdGrid) -> *const f
 /// Render the electric field directly to an RGBA8 byte buffer.
 ///
 /// # Safety
-/// `ptr` must be non-null and `out_ptr` must point to `width * height * 4` bytes.
+/// `ptr` must be non-null and `out_ptr` must point to at least `out_len` bytes.
 #[no_mangle]
 pub unsafe extern "C" fn wavefield_render_rgba(
     ptr: *const FdtdGrid,
     out_ptr: *mut u8,
+    out_len: usize,
     min_dbm: f64,
     max_dbm: f64,
 ) {
     if let Some(grid) = ptr.as_ref() {
         if !out_ptr.is_null() {
-            let len = grid.ez.len() * 4;
-            let out_slice = std::slice::from_raw_parts_mut(out_ptr, len);
-            render_field_rgba(&grid.ez, out_slice, min_dbm, max_dbm);
+            let required = match grid.ez.len().checked_mul(4) {
+                Some(len) => len,
+                None => return,
+            };
+            if out_len >= required {
+                let out_slice = std::slice::from_raw_parts_mut(out_ptr, required);
+                render_field_rgba(&grid.ez, out_slice, min_dbm, max_dbm);
+            }
         }
     }
 }
