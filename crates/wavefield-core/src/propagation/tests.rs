@@ -36,3 +36,38 @@ fn test_multipath_rx_power() {
     assert!(rx_dbm.is_finite());
     assert!(rx_dbm < 20.0);
 }
+
+#[test]
+fn test_fspl_guards_and_non_negative() {
+    assert_eq!(fspl_db(0.0, 2.4e9), 0.0);
+    assert_eq!(fspl_db(-5.0, 2.4e9), 0.0);
+    assert_eq!(fspl_db(f64::NAN, 2.4e9), 0.0);
+    assert_eq!(fspl_db(1.0, 0.0), 0.0);
+    assert_eq!(fspl_db(1.0, -100.0), 0.0);
+    assert_eq!(fspl_db(1.0, f64::INFINITY), 0.0);
+    // When distance is very small (near field < lambda/(4pi)), fspl clamped >= 0.0
+    assert_eq!(fspl_db(0.001, 2.4e9), 0.0);
+}
+
+#[test]
+fn test_knife_edge_itu_r_p526() {
+    assert_eq!(knife_edge_loss_db(-1.0), 0.0);
+    assert_eq!(knife_edge_loss_db(-0.78), 0.0);
+    let l_mid = knife_edge_loss_db(0.0);
+    assert!(l_mid > 0.0 && (l_mid - 6.0).abs() < 1.0);
+    let l_shadow = knife_edge_loss_db(2.0);
+    assert!(l_shadow > l_mid);
+}
+
+#[test]
+fn test_multipath_phase_inversion_at_zero_path_diff() {
+    // If refl_dist == direct_dist, direct and reflected waves travel same distance.
+    // With phase inversion (reflection from denser medium / Metal, Gamma < 0, phi_refl = PI),
+    // they destructively interfere!
+    let rx_metal = compute_multipath_rx_dbm(20.0, 10.0, 10.0, MaterialKind::Metal, 2.4e9);
+    let rx_direct_only = 20.0 - fspl_db(10.0, 2.4e9);
+    assert!(
+        rx_metal < rx_direct_only - 20.0,
+        "Destructive interference must occur when path difference is 0 and reflection phase inverts: rx_metal={rx_metal}, rx_direct={rx_direct_only}"
+    );
+}
