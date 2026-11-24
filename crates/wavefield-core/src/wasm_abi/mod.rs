@@ -7,6 +7,19 @@ use crate::materials::MaterialKind;
 /// Allocate and initialize a new FdtdGrid on the heap.
 #[no_mangle]
 pub extern "C" fn wavefield_grid_create(width: usize, height: usize, dx_m: f64) -> *mut FdtdGrid {
+    if width < 4 || height < 4 || !dx_m.is_finite() || dx_m <= 0.0 {
+        return std::ptr::null_mut();
+    }
+    let total_cells = match width.checked_mul(height) {
+        Some(c) if c <= 4_194_304 => c,
+        _ => return std::ptr::null_mut(),
+    };
+    if total_cells.checked_mul(4).is_none() || total_cells.checked_mul(std::mem::size_of::<f64>()).is_none() {
+        return std::ptr::null_mut();
+    }
+    if total_cells > (isize::MAX as usize / 8) {
+        return std::ptr::null_mut();
+    }
     let grid = Box::new(FdtdGrid::new(width, height, dx_m));
     Box::into_raw(grid)
 }
