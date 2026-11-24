@@ -19,6 +19,19 @@ fn test_wasm_abi_lifecycle() {
 }
 
 #[test]
+fn test_wasm_alloc_free_bytes() {
+    unsafe {
+        let ptr = wavefield_alloc_bytes(1024);
+        assert!(!ptr.is_null());
+        wavefield_free_bytes(ptr, 1024);
+
+        let zero_ptr = wavefield_alloc_bytes(0);
+        assert!(zero_ptr.is_null());
+        wavefield_free_bytes(std::ptr::null_mut(), 0);
+    }
+}
+
+#[test]
 fn test_wasm_abi_invalid_inputs_return_null() {
     let p1 = wavefield_grid_create(3, 10, 0.05);
     assert!(p1.is_null());
