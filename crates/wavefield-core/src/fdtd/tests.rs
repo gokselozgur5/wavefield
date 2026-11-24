@@ -79,7 +79,10 @@ fn test_fdtd_metal_pec_zeroing() {
     for y in 8..12 {
         for x in 8..12 {
             let val = grid.ez[y * grid.width + x];
-            assert_eq!(val, 0.0, "Metal cell ({x}, {y}) must remain strictly 0.0 (PEC)");
+            assert_eq!(
+                val, 0.0,
+                "Metal cell ({x}, {y}) must remain strictly 0.0 (PEC)"
+            );
         }
     }
 }

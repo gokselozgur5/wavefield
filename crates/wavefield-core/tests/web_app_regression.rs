@@ -50,7 +50,10 @@ fn test_web_content_covers_wgsl_and_presets() {
     assert!(webgpu_src.contains("initWebGpuFdtd"));
 
     let app_src = fs::read_to_string(repo_root.join("web/app.js")).unwrap();
-    assert!(!app_src.contains("'WebGPU WGSL'"), "HUD badge must not claim executing WebGPU WGSL while loop uses CPU");
+    assert!(
+        !app_src.contains("'WebGPU WGSL'"),
+        "HUD badge must not claim executing WebGPU WGSL while loop uses CPU"
+    );
     assert!(app_src.contains("CPU FDTD (WebGPU Ready)"));
 
     let presets_src = fs::read_to_string(repo_root.join("web/presets.js")).unwrap();
