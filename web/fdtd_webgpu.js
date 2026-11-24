@@ -52,6 +52,15 @@ fn update_e(@builtin(global_invocation_id) id: vec3<u32>) {
   } else if (mat == 4u) {
     ca = 0.98;
     cb = params.cDtDx * 0.18;
+  } else if (mat == 1u) {
+    ca = 0.99;
+    cb = params.cDtDx * 0.45;
+  } else if (mat == 2u) {
+    ca = 0.995;
+    cb = params.cDtDx * 0.16;
+  } else if (mat == 3u) {
+    ca = 0.96;
+    cb = params.cDtDx * 0.76;
   }
   ez[idx] = ca * ez[idx] + cb * curlH;
 }
