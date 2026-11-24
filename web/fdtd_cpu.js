@@ -1,4 +1,4 @@
-import { MaterialKind, MATERIAL_SPECS } from './materials.js';
+import { MaterialKind, MATERIAL_SPECS, turboColormapRgba } from './materials.js';
 
 const SPEED_OF_LIGHT = 299792458.0;
 const EPSILON_0 = 8.8541878128e-12;
