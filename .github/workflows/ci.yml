@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    name: Code Quality & Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+          components: rustfmt, clippy
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+      - name: Clippy linter
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Run unit and integration tests
+        run: cargo test --workspace --locked
+
+      - name: Build WebAssembly release target
+        run: cargo build --target wasm32-unknown-unknown --release -p wavefield-core
+
+      - name: Documentation check
+        run: RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps
