@@ -71,3 +71,38 @@ export function computeActiveSources() {
   }
   return sources;
 }
+
+export function paintObstacle(gx, gy, brush) {
+  const r = 3;
+  const mat = Number(brush);
+  const w = SIM_WIDTH, h = SIM_HEIGHT;
+  for (let dy = -r; dy <= r; dy++) {
+    for (let dx = -r; dx <= r; dx++) {
+      if (dx * dx + dy * dy <= r * r) {
+        const x = gx + dx, y = gy + dy;
+        if (x >= 0 && x < w && y >= 0 && y < h) {
+          state.solver.materials[y * w + x] = mat;
+        }
+      }
+    }
+  }
+}
+
+export function handlePointerAction(e, canvas) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const gx = Math.floor((e.clientX - rect.left) * scaleX);
+  const gy = Math.floor((e.clientY - rect.top) * scaleY);
+  if (state.brush === 'move-tx') {
+    state.txX = Math.max(0.05, Math.min(0.95, gx / canvas.width));
+    state.txY = Math.max(0.05, Math.min(0.95, gy / canvas.height));
+  } else {
+    paintObstacle(gx, gy, state.brush);
+  }
+  const probe = state.solver.probeDbm(gx, gy);
+  const elProbe = typeof document !== 'undefined' ? document.getElementById('telemetry-probe') : null;
+  if (elProbe) {
+    elProbe.textContent = `${probe.dbm.toFixed(1)} dBm (|Ez| ${probe.ezAbs.toFixed(2)} V/m)`;
+  }
+}
