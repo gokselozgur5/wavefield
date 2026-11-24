@@ -78,3 +78,29 @@ FdtdCpuSolver.prototype.step = function (subSteps = 1, sources = []) {
     this.stepCount++;
   }
 };
+
+FdtdCpuSolver.prototype._applyMur = function () {
+  const w = this.width, h = this.height;
+  const factor = (SPEED_OF_LIGHT * this.dt - this.dx) / (SPEED_OF_LIGHT * this.dt + this.dx);
+  for (let y = 0; y < h; y++) {
+    const row = y * w;
+    this.ez[row] += factor * (this.ez[row + 1] - this.ez[row]);
+    this.ez[row + (w - 1)] += factor * (this.ez[row + (w - 2)] - this.ez[row + (w - 1)]);
+  }
+  const lastRow = (h - 1) * w;
+  const prevRow = (h - 2) * w;
+  for (let x = 0; x < w; x++) {
+    this.ez[x] += factor * (this.ez[w + x] - this.ez[x]);
+    this.ez[lastRow + x] += factor * (this.ez[prevRow + x] - this.ez[lastRow + x]);
+  }
+};
+
+FdtdCpuSolver.prototype.probeDbm = function (x, y) {
+  const gx = Math.max(0, Math.min(this.width - 1, Math.round(x)));
+  const gy = Math.max(0, Math.min(this.height - 1, Math.round(y)));
+  const val = Math.abs(this.ez[gy * this.width + gx]);
+  const s = (val * val) / 376.73031346177;
+  const pMw = s * 1000.0;
+  const dbm = pMw <= 1e-15 ? -120.0 : Math.max(-120.0, Math.min(30.0, 10.0 * Math.log10(pMw)));
+  return { dbm, ezAbs: val, material: this.materials[gy * this.width + gx] || 0 };
+};
