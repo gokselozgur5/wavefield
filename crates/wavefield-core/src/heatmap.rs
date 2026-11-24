@@ -91,6 +91,13 @@ mod tests {
     }
 
     #[test]
+    fn test_ez_to_dbm_nan_inf_returns_floor() {
+        assert_eq!(ez_to_dbm(f64::NAN), -120.0);
+        assert_eq!(ez_to_dbm(f64::INFINITY), -120.0);
+        assert_eq!(ez_to_dbm(f64::NEG_INFINITY), -120.0);
+    }
+
+    #[test]
     fn test_render_field_rgba_dimensions() {
         let ez = vec![0.0, 0.5, 1.0, 2.0];
         let mut out = vec![0u8; 16];
