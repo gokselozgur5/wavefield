@@ -53,8 +53,10 @@ impl FdtdGrid {
                 let eps = props.eps_r * EPSILON_0;
                 let sigma = props.sigma_s_m;
 
-                let ca = (1.0 - (sigma * self.dt_s) / (2.0 * eps)) / (1.0 + (sigma * self.dt_s) / (2.0 * eps));
-                let cb = (self.dt_s / (eps * self.dx_m)) / (1.0 + (sigma * self.dt_s) / (2.0 * eps));
+                let ca = (1.0 - (sigma * self.dt_s) / (2.0 * eps))
+                    / (1.0 + (sigma * self.dt_s) / (2.0 * eps));
+                let cb =
+                    (self.dt_s / (eps * self.dx_m)) / (1.0 + (sigma * self.dt_s) / (2.0 * eps));
 
                 let curl_h = (self.hy[hy_row + x] - self.hy[hy_row + (x - 1)])
                     - (self.hx[hx_row_curr + x] - self.hx[hx_row_prev + x]);
@@ -71,7 +73,8 @@ impl FdtdGrid {
     fn apply_mur_abc(&mut self) {
         let w = self.width;
         let h = self.height;
-        let mur_coeff = (SPEED_OF_LIGHT * self.dt_s - self.dx_m) / (SPEED_OF_LIGHT * self.dt_s + self.dx_m);
+        let mur_coeff =
+            (SPEED_OF_LIGHT * self.dt_s - self.dx_m) / (SPEED_OF_LIGHT * self.dt_s + self.dx_m);
 
         for y in 0..h {
             let row = y * w;
@@ -93,7 +96,8 @@ impl FdtdGrid {
             self.ez[x] = new_top;
 
             let ez_in = self.ez[(h - 2) * w + x];
-            let new_bottom = self.ez_prev_bottom[x] + mur_coeff * (ez_in - self.ez[(h - 1) * w + x]);
+            let new_bottom =
+                self.ez_prev_bottom[x] + mur_coeff * (ez_in - self.ez[(h - 1) * w + x]);
             self.ez_prev_bottom[x] = ez_in;
             self.ez[(h - 1) * w + x] = new_bottom;
         }

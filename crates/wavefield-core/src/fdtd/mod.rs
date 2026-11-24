@@ -34,7 +34,10 @@ pub struct FdtdGrid {
 impl FdtdGrid {
     /// Create a new 2D TMz FDTD grid satisfying Courant stability.
     pub fn new(width: usize, height: usize, dx_m: f64) -> Self {
-        assert!(width >= 4 && height >= 4, "Grid dimensions must be at least 4x4");
+        assert!(
+            width >= 4 && height >= 4,
+            "Grid dimensions must be at least 4x4"
+        );
         assert!(dx_m > 0.0, "Spatial step dx must be strictly positive");
         let dt_max = dx_m / (SPEED_OF_LIGHT * std::f64::consts::SQRT_2);
         let dt_s = dt_max * 0.98;
@@ -56,7 +59,14 @@ impl FdtdGrid {
     }
 
     /// Set a rectangular region to a specific RF material.
-    pub fn set_material_region(&mut self, x0: usize, y0: usize, x1: usize, y1: usize, mat: MaterialKind) {
+    pub fn set_material_region(
+        &mut self,
+        x0: usize,
+        y0: usize,
+        x1: usize,
+        y1: usize,
+        mat: MaterialKind,
+    ) {
         let max_x = x1.min(self.width);
         let max_y = y1.min(self.height);
         let tag = mat as u8;
