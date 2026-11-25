@@ -9,7 +9,8 @@ fn main() -> ExitCode {
     let res = match args.get(1).map(String::as_str) {
         Some("link-budget") => commands::run_link(&args, json),
         Some("array") => commands::run_array(&args, json),
-        _ => Err("usage: wavefield <link-budget|array> [options] [--json]".into()),
+        Some("fresnel") => commands::run_fresnel(&args, json),
+        _ => Err("usage: wavefield <link-budget|array|fresnel> [options] [--json]".into()),
     };
     match res {
         Ok(s) => {
