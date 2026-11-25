@@ -3,5 +3,12 @@
 version = 4
 
 [[package]]
+name = "wavefield-cli"
+version = "0.1.0"
+dependencies = [
+ "wavefield-core",
+]
+
+[[package]]
 name = "wavefield-core"
 version = "0.1.0"
