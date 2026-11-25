@@ -1,3 +1,3 @@
 [workspace]
-members = ["crates/wavefield-core"]
+members = ["crates/wavefield-core", "crates/wavefield-cli"]
 resolver = "2"

@@ -1,0 +1,13 @@
+[package]
+name = "wavefield-cli"
+version = "0.1.0"
+edition = "2021"
+description = "CLI for RF link-budget, Fresnel zone, and phased-array calculations"
+license = "MIT"
+
+[[bin]]
+name = "wavefield"
+path = "src/main.rs"
+
+[dependencies]
+wavefield-core = { path = "../wavefield-core" }
