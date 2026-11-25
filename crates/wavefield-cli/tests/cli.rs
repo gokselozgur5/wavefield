@@ -42,3 +42,34 @@ fn array_json_and_invalid_usage() {
     let bad = run(&["unknown"]);
     assert!(!bad.status.success());
 }
+
+#[test]
+fn fresnel_json_and_invalid_obstacle() {
+    let ok = run(&[
+        "fresnel",
+        "--freq-ghz",
+        "2.4",
+        "--dist-km",
+        "1.0",
+        "--obstacle-dist-km",
+        "0.5",
+        "--obstacle-height-m",
+        "1.0",
+        "--json",
+    ]);
+    assert!(ok.status.success());
+    let s = String::from_utf8_lossy(&ok.stdout);
+    assert!(s.contains("\"r1_m\":") && s.contains("\"clear_60pct\":true"));
+    let bad = run(&[
+        "fresnel",
+        "--freq-ghz",
+        "2.4",
+        "--dist-km",
+        "1.0",
+        "--obstacle-dist-km",
+        "1.5",
+        "--obstacle-height-m",
+        "1.0",
+    ]);
+    assert!(!bad.status.success());
+}
