@@ -49,3 +49,23 @@ pub fn run_array(args: &[String], json: bool) -> Result<String, String> {
         ))
     }
 }
+
+pub fn run_fresnel(args: &[String], json: bool) -> Result<String, String> {
+    let c = rf::fresnel_clearance(
+        arg(args, "--freq-ghz")?,
+        arg(args, "--dist-km")?,
+        arg(args, "--obstacle-dist-km")?,
+        arg(args, "--obstacle-height-m")?,
+    )?;
+    if json {
+        Ok(format!(
+            "{{\"r1_m\":{:.4},\"clearance_m\":{:.4},\"clear_60pct\":{}}}",
+            c.r1_m, c.clearance_m, c.clear_60pct
+        ))
+    } else {
+        Ok(format!(
+            "Fresnel R1: {:.2} m | Clearance: {:.2} m | 60% Clear: {}",
+            c.r1_m, c.clearance_m, c.clear_60pct
+        ))
+    }
+}
